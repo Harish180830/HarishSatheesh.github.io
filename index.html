@@ -168,13 +168,56 @@
   .cursor{display:inline-block;width:8px;height:16px;background:var(--mint);margin-left:2px;vertical-align:middle;animation:blink 1s step-end infinite;}
   @keyframes blink{50%{opacity:0;}}
 
+  /* Python-style syntax highlight tokens for the terminal line */
+  .py-kw{color:#ff79c6;font-weight:600;}
+  .py-id{color:#8be9f9;}
+  .py-comment{color:#6a9955;font-style:italic;}
+
+  /* Professional masked line-reveal for the hero heading */
+  .line-mask{display:block;overflow:hidden;}
+  .line{
+    display:block;
+    transform:translateY(110%);
+    opacity:0;
+    animation:lineReveal .85s cubic-bezier(.16,.84,.44,1) forwards;
+  }
+  .line.l1{animation-delay:.2s;}
+  .line.l2{animation-delay:.42s;}
+  @keyframes lineReveal{
+    to{transform:translateY(0);opacity:1;}
+  }
+
+  /* Cascade-in for role / description / buttons, after the heading reveals */
+  .hero .role, .hero .desc, .hero-links{
+    opacity:0;
+    animation:heroSlideIn .75s cubic-bezier(.16,.84,.44,1) forwards;
+  }
+  .hero .role{animation-delay:.7s;}
+  .hero .desc{animation-delay:.85s;}
+  .hero-links{animation-delay:1s;}
+  @keyframes heroSlideIn{
+    from{opacity:0;transform:translateY(26px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+
+  /* subtle professional glow-pulse on the accent line, after it reveals */
+  @keyframes accentGlow{
+    0%,100%{ text-shadow:0 0 16px rgba(79,157,255,0.45); }
+    50%{ text-shadow:0 0 32px rgba(79,157,255,0.85); }
+  }
+
   .hero h1{
     font-size:clamp(38px,7vw,72px);
     font-weight:700;
     line-height:1.02;
     margin-bottom:10px;
   }
-  .hero h1 .accent{color:var(--mint);}
+  .hero h1 .accent{
+    color:var(--mint);
+    display:inline-block;
+    animation:accentGlow 2.6s ease-in-out infinite;
+    animation-delay:1.5s;
+  }
   .hero .role{
     font-size:clamp(16px,2.4vw,21px);
     color:var(--text-muted);
@@ -522,7 +565,7 @@
 </header>
 
 <main>
-  <section class="hero wrap" style="border-bottom:none;padding-top:0;">
+  <section class="hero wrap" style="border-bottom:none;">
     <svg class="hero-brain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <defs>
         <radialGradient id="brainGlow" cx="50%" cy="42%" r="60%">
@@ -664,8 +707,7 @@
       <path d="M188,332 C185,348 190,368 200,378 C210,368 215,348 212,332 Z" fill="none" stroke="#7ec8ff" stroke-width="2" opacity="0.85"/>
       <path d="M200,58 C198,140 202,240 200,340" fill="none" stroke="#4f9dff" stroke-width="1.2" opacity="0.4"/>
     </svg>
-    <div class="term" id="termText"></div>
-    <h1>Harish S<br><span class="accent">builds ML pipelines</span> that ship.</h1>
+    <h1><span class="line-mask"><span class="line l1">Harish S</span></span><span class="line-mask"><span class="line l2"><span class="accent">builds ML pipelines</span> that ship.</span></span></h1>
     <p class="role">AI / ML Engineer &middot; Data Science &amp; Generative AI &middot; Coimbatore, India</p>
     <p class="desc">B.Tech in Artificial Intelligence &amp; Data Science (CGPA 8.48). I build end-to-end ML systems from raw data to deployed model using Python, Scikit-learn, and LangChain, backed by two internships and an IEEE paper presentation.</p>
     <div class="hero-links">
@@ -1061,21 +1103,6 @@
   const navLinks = document.getElementById('navLinks');
   navToggle.addEventListener('click', () => navLinks.classList.toggle('open'));
   navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navLinks.classList.remove('open')));
-
-  // terminal typing effect
-  const termEl = document.getElementById('termText');
-  const termString = "import harish as candidate # status: ready to hire";
-  let ti = 0;
-  function typeTerm(){
-    if(ti <= termString.length){
-      termEl.textContent = termString.slice(0, ti);
-      ti++;
-      setTimeout(typeTerm, 32);
-    } else {
-      termEl.innerHTML = termString + '<span class="cursor"></span>';
-    }
-  }
-  typeTerm();
 
   // scroll reveal
   const revealEls = document.querySelectorAll('.reveal');
