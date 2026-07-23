@@ -448,6 +448,16 @@
     html{scroll-behavior:auto;}
   }
 
+  /* ---------- MOBILE PERFORMANCE: backdrop-filter blur is very costly to
+     repaint on phones (esp. Chrome for Android) while scrolling, since it
+     sits above the animated canvas. Swap to a plain solid panel there. ---------- */
+  @media (pointer:coarse){
+    header, .pipe-node, .stat-card, .skill-group, .project-card, .cert-log, .edu-card, .contact-box{
+      backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
+      background:var(--bg-alt) !important;
+    }
+  }
+
   /* ---------- TABLET REFINEMENTS ---------- */
   @media (max-width:900px){
     .wrap{padding:0 5%;}
@@ -1005,8 +1015,9 @@
     const canvas = document.getElementById('netCanvas');
     const ctx = canvas.getContext('2d');
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isMobile = window.matchMedia('(pointer:coarse)').matches;
     let W, H, nodes, pulses = [];
-    const LINK_DIST = 150;
+    const LINK_DIST = isMobile ? 110 : 150;
     let scrolling = false, scrollTimer = null;
     window.addEventListener('scroll', () => {
       scrolling = true;
@@ -1017,7 +1028,9 @@
     function sizeCanvas(){
       W = canvas.width = window.innerWidth;
       H = canvas.height = window.innerHeight;
-      const count = Math.max(40, Math.min(90, Math.round((W*H)/14000)));
+      const count = isMobile
+        ? Math.max(24, Math.min(45, Math.round((W*H)/22000)))
+        : Math.max(40, Math.min(90, Math.round((W*H)/14000)));
       nodes = Array.from({length: count}, () => ({
         x: Math.random()*W,
         y: Math.random()*H,
@@ -1102,6 +1115,12 @@
 
     if(reduceMotion){
       draw(); // single static frame, respects reduced-motion preference
+    } else if(isMobile){
+      let last = 0;
+      (function loop(ts){
+        if(ts - last > 33){ draw(); last = ts; } // ~30fps cap on mobile
+        requestAnimationFrame(loop);
+      })(0);
     } else {
       (function loop(){ draw(); requestAnimationFrame(loop); })();
     }
