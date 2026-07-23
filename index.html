@@ -42,7 +42,7 @@
 
   /* animated neural-network canvas background */
   #netCanvas{
-    position:fixed;inset:0;width:100vw;height:100vh;z-index:-2;
+    position:fixed;inset:0;width:100vw;height:100vh;z-index:-2;transform:translateZ(0);will-change:transform;
     background:
       radial-gradient(ellipse 90% 60% at 50% 0%, #0a1c3d 0%, #050d1f 45%, #000000 100%);
   }
@@ -325,7 +325,7 @@
   .section-head .tag{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--mint);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:8px;}
   .section-head h2{font-size:clamp(26px,4vw,36px);}
 
-  .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease, transform .6s ease;}
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .5s cubic-bezier(.22,.61,.36,1), transform .5s cubic-bezier(.22,.61,.36,1);will-change:opacity,transform;}
   .reveal.in{opacity:1;transform:translateY(0);}
 
   /* ---------- ABOUT ---------- */
@@ -1006,12 +1006,18 @@
     const ctx = canvas.getContext('2d');
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let W, H, nodes, pulses = [];
-    const LINK_DIST = 190;
+    const LINK_DIST = 150;
+    let scrolling = false, scrollTimer = null;
+    window.addEventListener('scroll', () => {
+      scrolling = true;
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => { scrolling = false; }, 120);
+    }, {passive:true});
 
     function sizeCanvas(){
       W = canvas.width = window.innerWidth;
       H = canvas.height = window.innerHeight;
-      const count = Math.max(60, Math.min(170, Math.round((W*H)/9500)));
+      const count = Math.max(40, Math.min(90, Math.round((W*H)/14000)));
       nodes = Array.from({length: count}, () => ({
         x: Math.random()*W,
         y: Math.random()*H,
@@ -1037,7 +1043,8 @@
     function draw(){
       ctx.clearRect(0,0,W,H);
 
-      // connections
+      // connections (skipped while actively scrolling to keep scroll buttery-smooth)
+      if(!scrolling)
       for(let i=0;i<nodes.length;i++){
         for(let j=i+1;j<nodes.length;j++){
           const dx = nodes[i].x-nodes[j].x, dy = nodes[i].y-nodes[j].y;
@@ -1057,14 +1064,16 @@
       // nodes
       nodes.forEach(n => {
         ctx.beginPath();
+        ctx.fillStyle = n.white ? 'rgba(255,255,255,0.35)' : 'rgba(110,180,255,0.35)';
+        ctx.arc(n.x, n.y, n.r * 2.2, 0, Math.PI*2);
+        ctx.fill();
+
+        ctx.beginPath();
         ctx.fillStyle = n.white ? 'rgba(255,255,255,0.95)' : 'rgba(110,180,255,0.95)';
-        ctx.shadowColor = n.white ? 'rgba(255,255,255,0.8)' : 'rgba(79,157,255,0.9)';
-        ctx.shadowBlur = 6;
         ctx.arc(n.x, n.y, n.r, 0, Math.PI*2);
         ctx.fill();
-        ctx.shadowBlur = 0;
 
-        if(!reduceMotion){
+        if(!reduceMotion && !scrolling){
           n.x += n.vx; n.y += n.vy;
           if(n.x < 0 || n.x > W) n.vx *= -1;
           if(n.y < 0 || n.y > H) n.vy *= -1;
@@ -1076,12 +1085,14 @@
         const x = p.a.x + (p.b.x - p.a.x) * p.t;
         const y = p.a.y + (p.b.y - p.a.y) * p.t;
         ctx.beginPath();
+        ctx.fillStyle = 'rgba(120,190,255,0.4)';
+        ctx.arc(x, y, 5, 0, Math.PI*2);
+        ctx.fill();
+
+        ctx.beginPath();
         ctx.fillStyle = 'rgba(255,255,255,0.95)';
-        ctx.shadowColor = 'rgba(120,190,255,0.95)';
-        ctx.shadowBlur = 12;
         ctx.arc(x, y, 2.4, 0, Math.PI*2);
         ctx.fill();
-        ctx.shadowBlur = 0;
         p.t += p.speed;
       });
       pulses = pulses.filter(p => p.t < 1);
