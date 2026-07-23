@@ -24,7 +24,7 @@
     --maxw:1600px;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
-  html{scroll-behavior:smooth;overflow-x:hidden;max-width:100vw;}
+  html{scroll-behavior:smooth;overflow-x:hidden;max-width:100vw;touch-action:manipulation;}
   body{
     background:var(--bg);
     color:var(--text);
@@ -232,7 +232,7 @@
     font-family:'JetBrains Mono',monospace;font-size:13px;
     padding:11px 20px;border-radius:8px;border:1px solid var(--border);
     display:inline-flex;align-items:center;gap:8px;
-    transition:.2s;
+    transition:.2s;touch-action:manipulation;
   }
   .btn-primary{background:var(--mint);color:#06231d;border-color:var(--mint);font-weight:600;}
   .btn-primary:hover{background:#7ff2df;transform:translateY(-1px);}
@@ -457,6 +457,10 @@
       background:var(--bg-alt) !important;
     }
   }
+
+  /* Let Chrome skip layout/paint for off-screen sections until they scroll
+     into view — a big win for scroll responsiveness on mobile Chrome. */
+  section:not(.hero){content-visibility:auto;contain-intrinsic-size:1px 900px;}
 
   /* ---------- TABLET REFINEMENTS ---------- */
   @media (max-width:900px){
@@ -1093,8 +1097,9 @@
         }
       });
 
-      // traveling signal pulses along active links
-      pulses.forEach(p => {
+      // traveling signal pulses along active links (desktop only — extra
+      // per-frame cost skipped on mobile for a lighter, smoother feel)
+      if(!isMobile) pulses.forEach(p => {
         const x = p.a.x + (p.b.x - p.a.x) * p.t;
         const y = p.a.y + (p.b.y - p.a.y) * p.t;
         ctx.beginPath();
@@ -1110,7 +1115,7 @@
       });
       pulses = pulses.filter(p => p.t < 1);
 
-      if(!reduceMotion && Math.random() < 0.09) spawnPulse();
+      if(!reduceMotion && !isMobile && Math.random() < 0.09) spawnPulse();
     }
 
     if(reduceMotion){
@@ -1125,6 +1130,13 @@
       (function loop(){ draw(); requestAnimationFrame(loop); })();
     }
   })();
+
+  // pause decorative SVG brain-particle animations on mobile (continuous
+  // SMIL repaint work adds up on lower-power devices)
+  if(window.matchMedia('(pointer:coarse)').matches){
+    const heroSvg = document.querySelector('.hero svg');
+    if(heroSvg && heroSvg.pauseAnimations) heroSvg.pauseAnimations();
+  }
 
   // mobile nav toggle
   const navToggle = document.getElementById('navToggle');
